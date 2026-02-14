@@ -1,0 +1,3 @@
+# requirements.txt
+# Lists Python dependencies for backend
+# Example: flask, flask-cors, requests, python-dotenv
