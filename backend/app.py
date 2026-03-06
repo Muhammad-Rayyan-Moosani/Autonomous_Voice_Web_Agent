@@ -15,12 +15,15 @@ from TTS import tts
 from flask import send_file
 import asyncio
 from my_agent import MyAgent
-from smallestai.atoms import agents
-from smallestai.atoms.agent import Agent, AgentSession
 import base64
+from anthropic import Anthropic
 
 
 load_dotenv()
+
+client = Anthropic(
+    api_key=os.getenv("CLAUDE_API_KEY")
+)
 
 app = Flask(__name__)
 
@@ -32,23 +35,25 @@ CORS(app, resources={
     }
 })
 
-async def get_agent_response(prompt_text):
-    # Start a temporary session
-    session = AgentSession()
-    agent = MyAgent()
-    session.add_node(agent)
-    await session.start()
+def get_agent_response(prompt_text):
+    """
+    Get response from Claude AI
+    Returns the text content from Claude's response
+    """
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250929",
+        max_tokens=2000,
+        messages=[
+            {"role": "user", "content": prompt_text}
+        ]
+    )
 
-    # Add user message
-    agent.context.add_message({"role": "user", "content": prompt_text})
-
-    # Collect streamed output
-    result_text = ""
-    async for chunk in agent.generate_response():
-        result_text += chunk
-
-    await session.wait_until_complete()
-    return result_text
+    # Extract text from Claude's response
+    # Claude returns response.content as a list of content blocks
+    if response.content and len(response.content) > 0:
+        return response.content[0].text
+    else:
+        raise Exception("No content in Claude response")
 
 @app.route("/agent", methods=["POST"])
 def agent():
@@ -107,7 +112,7 @@ def agent():
 
         # Step 5: Get AI response
         try:
-            ai_response = asyncio.run(get_agent_response(prompt_text))
+            ai_response = get_agent_response(prompt_text)
             print(f"AI Response: {ai_response[:100]}...")
         except Exception as e:
             print(f"Agent Error: {e}")
