@@ -18,7 +18,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } else if (request.action === "CLEAR_HIGHLIGHTS") {
         clearHighlights();
         sendResponse({ status: "success" });
-    }
+    } // this is for the agent to clear the highlights
     // Return true if you want to respond asynchronously, though here we differ synchronous or instant responses
 });
 

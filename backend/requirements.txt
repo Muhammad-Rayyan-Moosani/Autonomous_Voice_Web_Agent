@@ -5,3 +5,7 @@ flask
 flask-cors
 requests
 python-dotenv
+google-generativeai
+werkzeug
+openai
+
