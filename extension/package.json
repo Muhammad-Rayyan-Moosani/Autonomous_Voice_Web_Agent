@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && cp manifest.json background.js content.js offscreen.html offscreen.js mic-permission.html dist/",
     "lint": "eslint .",
     "preview": "vite preview"
   },

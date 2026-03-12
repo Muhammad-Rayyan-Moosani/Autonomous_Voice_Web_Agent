@@ -8,6 +8,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "GET_CONTEXT") {
         const context = getPageContext();
         sendResponse(context);
+        return true; // Keep message channel open
     } else if (request.action === "HIGHLIGHT") {
         if (request.selectors && Array.isArray(request.selectors)) {
             highlightElements(request.selectors);
@@ -15,11 +16,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         } else {
             sendResponse({ status: "error", message: "Invalid selectors" });
         }
+        return true; // Keep message channel open
     } else if (request.action === "CLEAR_HIGHLIGHTS") {
         clearHighlights();
         sendResponse({ status: "success" });
+        return true; // Keep message channel open
     }
-    // Return true if you want to respond asynchronously, though here we differ synchronous or instant responses
+    return false; // Close message channel for unknown actions
 });
 
 /**

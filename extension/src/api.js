@@ -1,42 +1,29 @@
-// api.js
-// Handles communication with the Flask backend
+// api.js – backend communication (extension only).
+// Single function: send audio + pageContext to POST /agent.
 
-const BACKEND_URL = "http://localhost:5000/agent";
+const AGENT_URL = "http://localhost:5001/agent";
 
 /**
- * Sends the user's audio and page context to the backend.
- * @param {Blob} audioBlob - The recorded audio.
- * @param {Object} pageContext - Metadata about the current page.
- * @returns {Promise<Object>} The JSON response from the backend.
+ * Sends recorded audio and page context to the backend.
+ * Backend returns JSON: transcript, response, audioUrl (optional), actions (optional).
+ *
+ * @param {Blob} audioBlob - Recorded audio (e.g. audio/webm).
+ * @param {Object} pageContext - { title, url, summary } from content script.
+ * @returns {Promise<Object>} Parsed JSON response.
  */
-export async function sendAgentRequest(audioBlob, pageContext) {
+export async function sendAudioToBackend(audioBlob, pageContext) {
     const formData = new FormData();
+    formData.append("audio", audioBlob, "input.webm");
+    formData.append("pageContext", JSON.stringify(pageContext || {}));
 
-    if (audioBlob) {
-        formData.append("audio", audioBlob, "input.webm");
+    const response = await fetch(AGENT_URL, {
+        method: "POST",
+        body: formData,
+    });
+
+    if (!response.ok) {
+        throw new Error(`Backend error: ${response.status} ${response.statusText}`);
     }
 
-    // Send context as a JSON string field, or individual fields
-    formData.append("pageContext", JSON.stringify(pageContext));
-
-    // If we had a text-only input mode, we'd append 'transcript' here too
-    // formData.append("transcript", textInput);
-
-    try {
-        const response = await fetch(BACKEND_URL, {
-            method: "POST",
-            body: formData,
-            // Note: Fetch automatically sets Content-Type to multipart/form-data with boundary
-        });
-
-        if (!response.ok) {
-            throw new Error(`Backend error: ${response.status} ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error("API Request Failed:", error);
-        throw error;
-    }
+    return response.json();
 }

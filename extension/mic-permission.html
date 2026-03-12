@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Allow microphone – Voice Agent</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 400px;
+      margin: 40px auto;
+      padding: 24px;
+      background: #1e1e2e;
+      color: #e6e6e8;
+      text-align: center;
+    }
+    h1 { font-size: 1.25rem; margin-bottom: 8px; }
+    p { color: #8b8b9e; font-size: 14px; margin-bottom: 24px; }
+    button {
+      padding: 14px 28px;
+      font-size: 16px;
+      background: #7c9cff;
+      color: #1e1e2e;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover { background: #9ab2ff; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .success { color: #7c9cff; margin-top: 20px; font-weight: 500; }
+    .error { color: #e06c75; margin-top: 20px; font-size: 14px; }
+    .info { color: #8b8b9e; margin-top: 12px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h1>Allow microphone</h1>
+  <p>Click the button below. When the browser asks, choose <strong>Allow</strong>. Then close this tab and try the extension popup again.</p>
+  <button type="button" id="allow">Allow microphone</button>
+  <div id="message"></div>
+  <script>
+    console.log('[VoiceAgent] Mic permission page loaded');
+    var btn = document.getElementById('allow');
+    var msg = document.getElementById('message');
+    btn.onclick = function () {
+      console.log('[VoiceAgent] Allow button clicked');
+      btn.disabled = true;
+      msg.className = '';
+      msg.innerHTML = '';
+      msg.textContent = 'Requesting microphone...';
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error('[VoiceAgent] getUserMedia not available');
+        msg.className = 'error';
+        msg.textContent = 'Microphone not supported in this browser.';
+        btn.disabled = false;
+        return;
+      }
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(function (stream) {
+          console.log('[VoiceAgent] getUserMedia success, tracks:', stream.getTracks().length);
+          stream.getTracks().forEach(function (t) { t.stop(); });
+          msg.className = 'success';
+          msg.textContent = 'Microphone allowed. Close this tab and press the mic in the extension popup.';
+          var info = document.createElement('div');
+          info.className = 'info';
+          info.textContent = 'You can close this tab now.';
+          msg.appendChild(info);
+        })
+        .catch(function (err) {
+          console.error('[VoiceAgent] getUserMedia error:', err.name, err.message, err);
+          msg.className = 'error';
+          if (err.name === 'NotAllowedError') {
+            msg.textContent = 'You chose Block or closed the prompt. Click the button again and choose Allow.';
+          } else if (err.name === 'NotFoundError') {
+            msg.textContent = 'No microphone found. Connect a microphone and try again.';
+          } else {
+            msg.textContent = 'Error: ' + (err.message || err.name || 'Unknown error');
+          }
+          btn.disabled = false;
+        });
+    };
+  </script>
+</body>
+</html>

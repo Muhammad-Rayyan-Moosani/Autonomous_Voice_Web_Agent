@@ -47,8 +47,9 @@ Expected Output:
 }
 
 ## ADDITIONAL INSTRUCTIONS
+- **CRITICAL**: Keep your response under 60 words (maximum 2-3 short sentences) because it will be converted to speech.
 - Ensure the response **directly references the page content**.
-- Keep responses **short but complete**.
+- Be **extremely concise** - prioritize the most important information only.
 - If the query cannot be fully answered, provide the **best possible answer** using page context.
-- Always output **valid JSON**, do not include explanatory text outside the JSON.
+- Do NOT output JSON - just provide a natural, conversational text response.
 - Consider **user intent**, DOM structure, and page relevance when generating the response.

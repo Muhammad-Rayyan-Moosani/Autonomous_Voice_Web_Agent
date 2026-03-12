@@ -1,21 +1,50 @@
-// background.js
-// Service worker for the extension
-
-console.log("Autonomous Voice Web Agent: Background service worker started.");
+// background.js – service worker; coordinates popup and offscreen document for mic
+let popupPort = null;
 
 chrome.runtime.onInstalled.addListener(() => {
     console.log("Autonomous Voice Web Agent installed.");
 });
 
-// Example: Listen for messages from content script or popup if complex coordination is needed.
-// Currently, popup talks directly to content script for context, which is fine for simple V3 extensions.
-// However, if we need to proxy requests to the backend to avoid CORS in content scripts (though host_permissions help),
-// or manage long-running tasks, we'd do it here.
+chrome.runtime.onConnect.addListener((port) => {
+    popupPort = port;
+    port.onDisconnect.addListener(() => { popupPort = null; });
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "PING") {
-        sendResponse({ status: "PONG" });
-    }
-    // If we need to proxy API requests:
-    // if (request.action === "PROXY_API_REQUEST") { ... }
+    port.onMessage.addListener((msg) => {
+        if (msg.action === "START_RECORDING") {
+            ensureOffscreenAndStart();
+        } else if (msg.action === "STOP_RECORDING") {
+            chrome.runtime.sendMessage({ target: "offscreen", action: "stop" }).catch(() => {});
+        }
+    });
 });
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg.type === "AUDIO_READY") {
+        if (popupPort) popupPort.postMessage({ type: "AUDIO_READY", audio: msg.audio });
+        sendResponse({ ok: true });
+    }
+    return false;
+});
+
+async function ensureOffscreenAndStart() {
+    const existing = await chrome.offscreen.hasDocument();
+    if (!existing) {
+        await chrome.offscreen.createDocument({
+            url: "offscreen.html",
+            reasons: [chrome.offscreen.Reason.USER_MEDIA],
+            justification: "Record microphone for voice agent",
+        });
+    }
+    const reply = await new Promise((resolve) => {
+        chrome.runtime.sendMessage({ target: "offscreen", action: "start" }, (r) => {
+            resolve(r);
+        });
+    });
+    if (popupPort) {
+        if (reply && reply.ok) {
+            popupPort.postMessage({ type: "RECORDING_STARTED" });
+        } else {
+            popupPort.postMessage({ type: "RECORDING_ERROR", error: (reply && reply.error) || "MIC_DENIED" });
+        }
+    }
+}

@@ -42,7 +42,7 @@ def get_agent_response(prompt_text):
     """
     response = client.messages.create(
         model="claude-sonnet-4-5-20250929",
-        max_tokens=2000,
+        max_tokens=900,
         messages=[
             {"role": "user", "content": prompt_text}
         ]
@@ -113,16 +113,37 @@ def agent():
         # Step 5: Get AI response
         try:
             ai_response = get_agent_response(prompt_text)
-            print(f"AI Response: {ai_response[:100]}...")
+            print(f"AI Response length: {len(ai_response)} chars")
+            print(f"AI Response: {ai_response[:200]}...")
         except Exception as e:
             print(f"Agent Error: {e}")
             return jsonify({"error": f"AI agent failed: {str(e)}"}), 500
 
         # Step 6: Convert AI response to speech
         try:
-            audio_bytes = tts(ai_response)
-            audio_bytes.seek(0)  # Reset buffer to start
-            audio_base64 = base64.b64encode(audio_bytes.read()).decode('utf-8')
+            # SmallestAI has a very low text limit (~200-250 chars)
+            max_tts_length = 200
+            tts_text = ai_response
+
+            if len(ai_response) > max_tts_length:
+                # Truncate at sentence boundary
+                truncated = ai_response[:max_tts_length]
+                last_period = truncated.rfind('.')
+                last_question = truncated.rfind('?')
+                last_exclaim = truncated.rfind('!')
+
+                cutoff = max(last_period, last_question, last_exclaim)
+                if cutoff > 0:
+                    tts_text = ai_response[:cutoff + 1]
+                else:
+                    tts_text = truncated + "..."
+
+                print(f"⚠️  TTS text truncated from {len(ai_response)} to {len(tts_text)} chars")
+
+            print(f"Sending to TTS: {len(tts_text)} chars - '{tts_text[:100]}...'")
+
+            audio_bytes = tts(tts_text)
+            audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
             print(f"Audio generated, base64 length: {len(audio_base64)}")
         except Exception as e:
             print(f"TTS Error: {e}")

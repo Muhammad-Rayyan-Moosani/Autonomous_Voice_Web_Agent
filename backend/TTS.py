@@ -1,28 +1,56 @@
 # TTS.py
 
 import os
-from smallestai.waves import WavesClient
-from io import BytesIO
+import asyncio
+from smallestai.waves import AsyncWavesClient
+from datetime import datetime
 
-SMALLEST_API_KEY = os.getenv("SMALLEST_API_KEY")
 
-client = WavesClient(api_key=SMALLEST_API_KEY)
-
-def tts(text, voice_id="alloy", sample_rate=24000, speed=1.0):
+async def tts_async(text):
     """
-    Convert text to speech using SmallestAI.
-    Returns: BytesIO containing WAV audio
+    Async function to convert text to speech using SmallestAI Waves API.
+
+    Args:
+        text: The text to convert to speech
+
+    Returns:
+        bytes: WAV audio data
+
+    Raises:
+        ValueError: If API key is missing or text is empty
+        Exception: If API request fails
     """
+    SMALLEST_API_KEY = os.getenv("SMALLEST_API_KEY")
 
-    audio_bytes = client.synthesize(
-        text=text,
-        voice_id=voice_id,
-        sample_rate=sample_rate,
-        speed=speed,
-        output_format="wav"
-    )
+    if not SMALLEST_API_KEY:
+        raise ValueError("SMALLEST_API_KEY environment variable not set")
 
-    audio_buffer = BytesIO(audio_bytes)
-    audio_buffer.seek(0)
+    if not text or not text.strip():
+        raise ValueError("Text cannot be empty")
 
-    return audio_buffer
+    print(f'Sending TTS request at {datetime.now()}')
+    print(f'Text length: {len(text)} chars')
+
+    try:
+        client = AsyncWavesClient(api_key=SMALLEST_API_KEY)
+        async with client as tts_client:
+            audio_bytes = await tts_client.synthesize(text)
+            print(f'TTS response received: {len(audio_bytes)} bytes')
+            return audio_bytes
+
+    except Exception as e:
+        print(f'TTS request failed: {e}')
+        raise
+
+
+def tts(text):
+    """
+    Synchronous wrapper for async TTS function.
+
+    Args:
+        text: The text to convert to speech
+
+    Returns:
+        bytes: WAV audio data
+    """
+    return asyncio.run(tts_async(text))
