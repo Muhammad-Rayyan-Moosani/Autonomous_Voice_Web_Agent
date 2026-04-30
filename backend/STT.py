@@ -1,8 +1,6 @@
 # speech_to_text.py
 # Converts audio from the extension into text
 # Prepares input for the planner
-from pydub import AudioSegment
-import io
 import os
 import requests
 
@@ -46,18 +44,17 @@ def transcribe_audio(audio_bytes):
 
 def stt(audio_file):
     # Read the webm bytes
-
     audio_bytes = audio_file.read()
 
-    # Convert webm to wav
-    webm_audio = AudioSegment.from_file(io.BytesIO(audio_bytes), format="webm")
-    wav_io = io.BytesIO()
-    webm_audio.export(wav_io, format="wav")
-    wav_bytes = wav_io.getvalue()
-
-    # Send wav_bytes to SmallestAI STT
-    transcript = transcribe_audio(wav_bytes)
-
+    # For now, send webm directly to SmallestAI STT
+    # The API might accept webm format directly
+    # If not, we'll need to use a different audio conversion library
+    try:
+        transcript = transcribe_audio(audio_bytes)
+    except Exception as e:
+        print(f"Warning: Direct webm transcription failed: {e}")
+        # If the API doesn't accept webm, we'll need alternative solution
+        raise Exception("Audio conversion needed but pydub not available. Consider using ffmpeg or another library.")
 
     return transcript
 
