@@ -1,41 +1,20 @@
 {
-    "manifest_version": 3,
-    "name": "Autonomous Voice Web Agent",
-    "version": "1.0",
-    "description": "AI-powered voice agent for web navigation",
-    "permissions": [
-        "activeTab",
-        "scripting",
-        "storage",
-        "tabs",
-        "offscreen"
-    ],
-    "host_permissions": [
-        "<all_urls>",
-        "http://localhost:5001/*"
-    ],
-    "background": {
-        "service_worker": "background.js"
-    },
-    "content_scripts": [
-        {
-            "matches": [
-                "<all_urls>"
-            ],
-            "js": [
-                "content.js"
-            ]
-        }
-    ],
-    "action": {
-        "default_popup": "index.html",
-        "default_title": "Voice Agent"
-    },
-    
-    "icons": {
-    "16": "vite.svg",
-    "48": "vite.svg",
-    "128": "vite.svg"
-}
+  "manifest_version": 3,
+  "name": "Voice Agent",
+  "version": "1.0",
 
+  "permissions": ["tabs", "activeTab"],
+
+  "host_permissions": ["<all_urls>"],
+
+  "action": {
+    "default_popup": "popup.html"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ]
 }

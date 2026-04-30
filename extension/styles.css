@@ -1,0 +1,61 @@
+body {
+  width: 220px;
+  height: 140px;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.container {
+  text-align: center;
+}
+
+h3 {
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+button {
+  width: 80px;
+  padding: 8px;
+  margin: 5px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+/* Start button */
+#start {
+  background-color: #22c55e;
+  color: white;
+}
+
+#start:hover {
+  background-color: #16a34a;
+}
+
+/* Stop button */
+#stop {
+  background-color: #ef4444;
+  color: white;
+}
+
+#stop:hover {
+  background-color: #dc2626;
+}
+
+/* Permission button */
+#permission {
+  background-color: #3b82f6; 
+  color: white;
+}
+
+#permission:hover {
+  background-color: #2563eb;
+}
