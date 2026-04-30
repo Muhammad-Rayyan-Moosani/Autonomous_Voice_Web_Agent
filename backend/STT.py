@@ -4,9 +4,10 @@
 import os
 import requests
 
-SMALLEST_API_KEY = os.getenv("SMALLEST_API_KEY")
+
 
 def transcribe_audio(audio_bytes):
+    SMALLEST_API_KEY = os.getenv("SMALLEST_API_KEY")
     response = requests.post(
         "https://waves-api.smallest.ai/api/v1/pulse/get_text",
         params={"model": "pulse", "language": "en"},
