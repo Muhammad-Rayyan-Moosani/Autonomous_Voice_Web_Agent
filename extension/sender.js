@@ -1,3 +1,4 @@
+//Sender sends the audio + stringified DOM elements to the backend
 export async function sendAudioWithContext(blob) {
 
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -6,8 +7,8 @@ export async function sendAudioWithContext(blob) {
         type: "GET_CONTEXT"
     });
 
-    console.log("📤 Sender.js - Received page context:", pageContext);
-    console.log("📤 Sender.js - Context JSON:", JSON.stringify(pageContext));
+    console.log("Sender.js - Received page context:", pageContext);
+    console.log("Sender.js - Context JSON:", JSON.stringify(pageContext));
 
     const formData = new FormData();
     formData.append("audio", blob, "input.webm");
@@ -22,7 +23,7 @@ export async function sendAudioWithContext(blob) {
         return await response.json();
 
     } catch (err) {
-        console.error("❌ Send failed:", err);
+        console.error("Send failed:", err);
         throw err;
     }
 }

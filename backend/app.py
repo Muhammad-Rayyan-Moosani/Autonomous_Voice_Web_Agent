@@ -60,17 +60,17 @@ def agent():
         print("Audio filename:", audio_file.filename)
         print("Content-Type:", audio_file.content_type)
 
-        # ✅ Read audio safely ONCE
+        # Read audio 
         audio_bytes = audio_file.read()
         print("Audio size:", len(audio_bytes), "bytes")
 
-        # ❌ Reject invalid audio early
+        # Reject invalid audio 
         if not audio_bytes or len(audio_bytes) < 1000:
             return jsonify({
                 "error": f"Invalid audio received (too small: {len(audio_bytes)} bytes)"
             }), 400
 
-        # ✅ Pass controlled stream to STT
+        # Pass bytes into stt and change the format
         try:
             transcript = stt(BytesIO(audio_bytes))
             print(f"Transcript: {transcript}")
@@ -85,7 +85,7 @@ def agent():
         except FileNotFoundError:
             return jsonify({"error": "Prompt template not found"}), 500
 
-        # Parse context
+        # Parse the DOM elements
         try:
             page_data = json.loads(Page_Context)
             title = page_data.get("title", "Unknown Page")
@@ -106,7 +106,7 @@ def agent():
         except Exception as e:
             return jsonify({"error": f"AI agent failed: {str(e)}"}), 500
 
-        # TTS (truncate safely)
+        # TTS 
         try:
             max_len = 200
             tts_text = ai_response

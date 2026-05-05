@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Voice Agent Test</title>
+  <link rel="stylesheet" href="styles.css">
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    /* Wrapper to simulate extension popup window */
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #0a0a0a;
+    }
+    .popup-wrapper {
+      width: 380px;
+      height: 480px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="popup-wrapper">
+    <div id="root"></div>
+  </div>
+
+  <!-- Mock the sender and receiver modules -->
+  <script type="module">
+    // Mock functions for testing UI only
+    window.sendAudioWithContext = async (blob) => {
+      console.log("Mock: Sending audio blob:", blob);
+      // Simulate processing delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return {
+        audioData: "mock-base64-audio-data",
+        response: "This is a mock response"
+      };
+    };
+
+    window.playAudioFromBase64 = (audioData) => {
+      console.log("Mock: Playing audio:", audioData);
+      // In real extension, this would play the audio
+    };
+  </script>
+
+  <script type="text/babel">
+    // Make mock functions available to the React component
+    const sendAudioWithContext = window.sendAudioWithContext;
+    const playAudioFromBase64 = window.playAudioFromBase64;
+
+    const { useState } = React;
+
+    // Store these outside the component to preserve the exact logic from popup.js
+    let mediaRecorder;
+    let chunks = [];
+    let stream = null;
+
+    function VoiceAgentApp() {
+      const [status, setStatus] = useState('idle'); // idle, recording, processing
+      const [hasPermission, setHasPermission] = useState(false);
+      const [error, setError] = useState(null);
+
+      // Get mic permission first - exact logic from popup.js
+      const requestPermission = async () => {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          setHasPermission(true);
+          setError(null);
+          console.log("Mic permission granted");
+        } catch (err) {
+          setError("Microphone permission denied");
+          console.error("Mic permission denied:", err);
+        }
+      };
+
+      // Start recording - exact logic from popup.js
+      const startRecording = () => {
+        if (!stream) {
+          console.log("Please allow mic first");
+          setError("Please allow microphone access first");
+          return;
+        }
+
+        chunks = [];
+        setError(null);
+
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: "audio/webm"
+        });
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) {
+            chunks.push(e.data);
+          }
+        };
+
+        mediaRecorder.start();
+        setStatus('recording');
+        console.log("Recording started");
+      };
+
+      // Stop recording - exact logic from popup.js
+      const stopRecording = () => {
+        if (!mediaRecorder || mediaRecorder.state !== "recording") {
+          console.log("Not recording");
+          return;
+        }
+
+        mediaRecorder.onstop = async () => {
+          const blob = new Blob(chunks, { type: "audio/webm" });
+          console.log("Recording stopped, size:", blob.size);
+
+          setStatus('processing');
+
+          try {
+            const result = await sendAudioWithContext(blob);
+            console.log("Backend result:", result);
+            playAudioFromBase64(result.audioData);
+            setStatus('idle');
+          } catch (err) {
+            console.error("Send failed:", err);
+            setError("Failed to process audio");
+            setStatus('idle');
+          }
+        };
+
+        mediaRecorder.stop();
+      };
+
+      return (
+        <div className="app-container">
+          <div className="header">
+            <div className="pulse-animation">
+              <div className="pulse-ring"></div>
+              <div className="pulse-ring"></div>
+              <div className="mic-icon">
+                {status === 'recording' ? '🎙️' : status === 'processing' ? '⚙️' : '🎤'}
+              </div>
+            </div>
+
+            <h1 className="title">Voice Agent</h1>
+            <p className="subtitle">Your AI-powered voice assistant</p>
+
+            <div className={`status-badge ${status}`}>
+              <span className="status-dot"></span>
+              <span className="status-text">
+                {status === 'idle' && 'Ready'}
+                {status === 'recording' && 'Recording'}
+                {status === 'processing' && 'Processing'}
+              </span>
+            </div>
+          </div>
+
+          {error && (
+            <div className="error-card">
+              <span className="error-icon">⚠️</span>
+              <span className="error-text">{error}</span>
+            </div>
+          )}
+
+          <div className="controls">
+            {!hasPermission ? (
+              <button
+                className="btn btn-permission"
+                onClick={requestPermission}
+              >
+                <div className="btn-content">
+                  <span className="btn-icon">🔓</span>
+                  <span className="btn-text">Enable Microphone</span>
+                </div>
+              </button>
+            ) : (
+              <>
+                {status !== 'recording' ? (
+                  <button
+                    className="btn btn-start"
+                    onClick={startRecording}
+                    disabled={status === 'processing'}
+                  >
+                    <div className="btn-content">
+                      <span className="btn-icon">▶️</span>
+                      <span className="btn-text">Start Recording</span>
+                    </div>
+                  </button>
+                ) : (
+                  <button
+                    className="btn btn-stop"
+                    onClick={stopRecording}
+                  >
+                    <div className="btn-content">
+                      <span className="btn-icon">⏹️</span>
+                      <span className="btn-text">Stop Recording</span>
+                    </div>
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+
+          {hasPermission && (
+            <div className="info-section">
+              <div className="waveform">
+                <span className={`wave ${status === 'recording' ? 'active' : ''}`}></span>
+                <span className={`wave ${status === 'recording' ? 'active' : ''}`}></span>
+                <span className={`wave ${status === 'recording' ? 'active' : ''}`}></span>
+                <span className={`wave ${status === 'recording' ? 'active' : ''}`}></span>
+                <span className={`wave ${status === 'recording' ? 'active' : ''}`}></span>
+              </div>
+
+              <p className="footer-text">
+                {status === 'idle' && 'Click to start recording your voice'}
+                {status === 'recording' && 'Listening to your voice...'}
+                {status === 'processing' && 'Analyzing your request...'}
+              </p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<VoiceAgentApp />);
+  </script>
+</body>
+</html>

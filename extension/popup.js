@@ -6,7 +6,7 @@ let mediaRecorder;
 let chunks = [];
 let stream = null;
 
-// 🎤 Mic permission
+// Get mic permission first
 document.getElementById("permission").onclick = async () => {
     try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -16,7 +16,7 @@ document.getElementById("permission").onclick = async () => {
     }
 };
 
-// ▶️ Start recording
+// upon click start recording
 document.getElementById("start").onclick = () => {
 
     if (!stream) {
@@ -40,7 +40,7 @@ document.getElementById("start").onclick = () => {
     console.log("Recording started");
 };
 
-// ⏹ Stop + send
+// upon click stop it and send it to the backend
 document.getElementById("stop").onclick = () => {
 
     if (!mediaRecorder || mediaRecorder.state !== "recording") {

@@ -47,9 +47,8 @@ def stt(audio_file):
     # Read the webm bytes
     audio_bytes = audio_file.read()
 
-    # For now, send webm directly to SmallestAI STT
-    # The API might accept webm format directly
-    # If not, we'll need to use a different audio conversion library
+    # send webm directly to SmallestAI STT
+    # otherwise use different audio conversion library
     try:
         transcript = transcribe_audio(audio_bytes)
     except Exception as e:

@@ -1,4 +1,4 @@
-// Content script - gets page context
+// Content script gets page context/DOM elements
 console.log('[VoiceAgent] Content script loaded');
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -8,9 +8,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             url: window.location.href,
             summary: document.body.innerText.slice(0, 5000)
         };
-        console.log("📄 Content.js - Sending page context:", context);
+        console.log("Content.js - Sending page context:", context);
         sendResponse(context);
-        return true; // Keep message channel open
+        return true; 
     }
     return false;
 });

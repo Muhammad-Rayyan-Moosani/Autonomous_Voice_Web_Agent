@@ -1,13 +1,13 @@
-
+// basically receives audio from TTS in the backend and plays it 
 
 export function playAudioFromBase64(audioBase64) {
     try {
         if (!audioBase64) {
-            console.error("❌ No audio data received");
+            console.error("No audio received");
             return;
         }
 
-        // 🧠 Convert base64 → binary
+        // base64 to binary
         const byteCharacters = atob(audioBase64);
         const byteNumbers = new Array(byteCharacters.length);
 
@@ -17,23 +17,23 @@ export function playAudioFromBase64(audioBase64) {
 
         const byteArray = new Uint8Array(byteNumbers);
 
-        // 🎧 Create audio blob
+        // create the audio blob
         const audioBlob = new Blob([byteArray], { type: "audio/wav" });
 
         const audioUrl = URL.createObjectURL(audioBlob);
 
-        // 🔊 Play audio
+        // plays audio
         const audio = new Audio(audioUrl);
         audio.play();
 
-        console.log("✅ Audio playing...");
+        console.log("Audio playing...");
 
         audio.onended = () => {
             URL.revokeObjectURL(audioUrl);
-            console.log("🎧 Audio finished");
+            console.log("Audio finished");
         };
 
     } catch (err) {
-        console.error("❌ Failed to play audio:", err);
+        console.error("Failed to play audio:", err);
     }
 }
